@@ -1,4 +1,4 @@
-from flask import Flask, request, Blueprint
+from flask import Flask, request, Blueprint, jsonify
 import requests
 from twilio.twiml.messaging_response import MessagingResponse
 import json
@@ -9,12 +9,20 @@ query = Blueprint('query', __name__, url_prefix='/query')
 
 DROPBOX_URL = ""
 
-def make_filename(media_url, media_type):
-    filename = media_url.split('/')[-1].split('.')[0] + '.' + media_type.split('/')[-1]
-    return filename
+def make_file_tuple(i, values):
+    url = values.get(f"MediaUrl{i}", '')
+    body = values.get("Body", '')
+    _from = values.get("From", '')
+    profile_name = values.get("ProfileName", '')
+    content_type = values.get(f"MediaContentType{i}", '')
 
-def send_to_dropbox(media_url, media_type, DROPBOX_TOKEN):
-    filename = make_filename(media_url, media_type)
+    base_filename = url.split('/')[-1].split('.')[0] + '_' + body + '_' + _from.split('+')[-1] + '_' + profile_name
+
+    filename = base_filename + '.' + content_type.split('/')[-1]
+
+    return (url, filename) 
+
+def send_to_dropbox(media_url, filename, DROPBOX_TOKEN):
 
     body = {
         "path": f"/{filename}",
@@ -46,17 +54,26 @@ def check_async_status(async_job_id):
 
 @query.route('/', methods=['POST'])
 def get_media():
-    num_media = int(request.values.get('NumMedia', 0))
 
-    media_files = [(request.values.get(f"MediaUrl{i}", ''),
-                    request.values.get(f"MediaContentType{i}", ''))
-                   for i in range(0, num_media)]
+    try:
+        num_media = int(request.values.get('NumMedia'), 0)
+    except TypeError:
+        content = {'error': 'invalid whatsapp content'}
+        return jsonify(content), 400
 
-    for media_url, media_content in media_files:
-        send_to_dropbox(media_url, media_content, DROPBOX_TOKEN)
+    media_files = [ make_file_tuple(i, request.values) for i in range(0, num_media)]
 
-    return 'success'
+    if media_files:
+        for media_url, filename in media_files:
+            resp = send_to_dropbox(media_url, filename, DROPBOX_TOKEN)
+            job_id = resp.json()['async_job_id']
+            resp = check_async_status(job_id)
+            if resp.json()['.tag'] == 'in_progress':
+                return jsonify({'error': 'malformed request'}), 400
+            if res.json()['.tag'] == 'complete':
+                return jsonify({'success': 'complete'}), 200
 
-@query.route('/hi', methods=["GET"])
-def hello():
-    return json.dumps('hi')
+    content = {'error': 'missing whatsapp content'}
+    return jsonify(content), 400
+
+
