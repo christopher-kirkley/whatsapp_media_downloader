@@ -1,2 +1,4 @@
-# whatsapp_media_downloader
-Twilio WhatsApp bot to download media from WhatsApp messages
+# WhatsApp Dropbox Downloader
+
+A Flask microservice that connects a WhatsApp number to Dropbox.
+
