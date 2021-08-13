@@ -67,17 +67,17 @@ def get_media():
 
     media_files = [ make_file_tuple(i, request.values) for i in range(0, num_media)]
 
-    if media_files:
-        for media_url, filename in media_files:
-            resp = send_to_dropbox(media_url, filename, DROPBOX_TOKEN)
-            job_id = resp.json()['async_job_id']
-            resp = check_async_status(job_id)
-            if resp.json()['.tag'] == 'in_progress':
-                return jsonify({'error': 'malformed request'}), 400
-            if res.json()['.tag'] == 'complete':
-                return jsonify({'success': 'complete'}), 200
+    if media_files == []:
+        content = {'error': 'missing whatsapp content'}
+        return jsonify(content), 400
 
-    content = {'error': 'missing whatsapp content'}
-    return jsonify(content), 400
+    for media_url, filename in media_files:
+        resp = send_to_dropbox(media_url, filename, DROPBOX_TOKEN)
+        job_id = resp.json()['async_job_id']
+        resp = check_async_status(job_id)
+        if resp.json()['.tag'] == 'in_progress':
+            return jsonify({'error': 'malformed request'}), 200
+        if res.json()['.tag'] == 'complete':
+            return jsonify({'success': 'complete'}), 200
 
 
