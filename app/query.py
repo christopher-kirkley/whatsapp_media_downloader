@@ -51,6 +51,10 @@ def check_async_status(async_job_id):
 
     return response
 
+@query.route('/', methods=['GET'])
+def hi():
+    return str('hi')
+
 @query.route('/', methods=['POST'])
 def get_media():
 
@@ -62,20 +66,17 @@ def get_media():
 
     media_files = [ make_file_tuple(i, request.values) for i in range(0, num_media)]
 
-    if media_files:
-        for media_url, filename in media_files:
-            resp = send_to_dropbox(media_url, filename, DROPBOX_TOKEN)
-            if resp.status_code != 200 or resp.json().get('error'):
-                return jsonify({'error': 'dropbox error'}), 400
-            else:
-                job_id = resp.json()['async_job_id']
-                resp = check_async_status(job_id)
-                if resp.json()['.tag'] == 'in_progress':
-                    return jsonify({'error': 'malformed request'}), 400
-                if resp.json()['.tag'] == 'complete':
-                    return jsonify({'success': 'complete'}), 200
+    if media_files == []:
+        content = {'error': 'missing whatsapp content'}
+        return jsonify(content), 400
 
-    content = {'error': 'missing whatsapp content'}
-    return jsonify(content), 400
-
+    for media_url, filename in media_files:
+        resp = send_to_dropbox(media_url, filename, DROPBOX_TOKEN)
+        job_id = resp.json()['async_job_id']
+        resp = check_async_status(job_id)
+        twilio_resp = MessagingResponse()
+        if resp.json()['.tag'] == 'in_progress':
+            return str(twilio_resp), 200
+        if resp.json()['.tag'] == 'complete':
+            return str(twilio_resp), 200
 
