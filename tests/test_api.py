@@ -20,7 +20,6 @@ def test_fails_async_status():
 
 def test_passes_async_status():
     media_url = "https://storage.googleapis.com/gd-wagtail-prod-assets/original_images/evolving_google_identity_3x2.jpg"
-    media_url = ''
     filename = 'test.jpg'
     resp = send_to_dropbox(media_url, filename, DROPBOX_TOKEN)
     data = resp.json()

@@ -72,10 +72,13 @@ def get_media():
 
     for media_url, filename in media_files:
         resp = send_to_dropbox(media_url, filename, DROPBOX_TOKEN)
-        job_id = resp.json()['async_job_id']
+        if resp.json().get('error'):
+            content = {'error': 'dropbox error'}
+            return jsonify(content), 400
+        job_id = resp.json().get('async_job_id')
         resp = check_async_status(job_id)
         twilio_resp = MessagingResponse()
-        if resp.json()['.tag'] == 'in_progress':
+        if resp.json().get('.tag') == 'in_progress':
             return str(twilio_resp), 200
         if resp.json()['.tag'] == 'complete':
             return str(twilio_resp), 200
