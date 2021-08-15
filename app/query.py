@@ -1,3 +1,4 @@
+from _pytest.config import filename_arg
 from flask import Flask, request, Blueprint, jsonify
 import requests
 from twilio.twiml.messaging_response import MessagingResponse
@@ -13,18 +14,26 @@ DROPBOX_URL = ""
 def make_file_tuple(i, values):
     url = values.get(f"MediaUrl{i}", '')
     body = values.get("Body", '')
-    _from = values.get("From", '')
+    _from = values.get("From", '').split('+')[-1]
     profile_name = values.get("ProfileName", '')
     content_type = values.get(f"MediaContentType{i}", '')
 
-    filename = url.split('/')[-1].split('.')[0] + '_' + body + '_' + _from.split('+')[-1] + '_' + profile_name + '.' + content_type.split('/')[-1]
+    filename = url.split('/')[-1].split('.')[0] + '_' + body + '_' + _from + '_' + profile_name + '.' + content_type.split('/')[-1]
 
-    return (url, filename) 
+    return {'url': url, 'filename': filename, '_from': _from}
 
-def send_to_dropbox(media_url, filename, DROPBOX_TOKEN):
+def send_to_dropbox(item, DROPBOX_TOKEN):
+
+    # sends media url to dropbox api endpoint
+    # constructs the file path to a subdirectory, storing media by contacts telephone number
+    
+
+    media_url = item.get('url')
+    _path = item.get('_from') + '/' + item.get('filename') 
+    
 
     body = {
-        "path": f"/{filename}",
+        "path": f"/{_path}",
         "url": media_url
     }
 
@@ -70,8 +79,8 @@ def get_media():
         content = {'error': 'missing whatsapp content'}
         return jsonify(content), 400
 
-    for media_url, filename in media_files:
-        resp = send_to_dropbox(media_url, filename, DROPBOX_TOKEN)
+    for item in media_files:
+        resp = send_to_dropbox(item, DROPBOX_TOKEN)
         if resp.json().get('error'):
             content = {'error': 'dropbox error'}
             return jsonify(content), 400
