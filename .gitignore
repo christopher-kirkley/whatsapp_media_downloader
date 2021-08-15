@@ -2,6 +2,6 @@
 .DS_Store
 config.py
 /__pycache__/
-/tests/__pycache__/
-/app/__pycache__/
+/tests/__pycache__
+/app/__pycache__
 supervisord.pid

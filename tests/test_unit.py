@@ -11,9 +11,7 @@ def test_make_filename():
             "MediaContentType0": "image/jpeg",
             }
     filename = make_file_tuple(0, values)
-    assert filename == {
-            "url": "https://www.google.com/qwerty",
-            "filename": "qwerty_caption_19995555555_Bobo.jpeg",
-            "_from": "19995555555",
-            }
+    assert filename == (
+            "https://www.google.com/qwerty",
+            "19995555555/qwerty_caption_19995555555_Bobo.jpeg")
 
