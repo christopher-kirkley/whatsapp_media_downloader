@@ -56,10 +56,6 @@ def check_async_status(async_job_id):
 
     return response
 
-@query.route('/', methods=['GET'])
-def hi():
-    return str('hi')
-
 @query.route('/', methods=['POST'])
 def get_media():
 
