@@ -104,3 +104,17 @@ def test_mock_send_to_dropbox_invalid_url(requests_mock, client):
     assert res.status_code == 400
     assert json.loads(res.data) == {'error': 'dropbox error'}
 
+def test_send_to_dropbox(requests_mock):
+    # set up mock data
+
+    save_url = "https://api.dropboxapi.com/2/files/save_url"
+    content = {'.tag': 'async_job_id', 'async_job_id': 1}
+    requests_mock.post(save_url, json=content)
+
+    media_url = "https://storage.googleapis.com/gd-wagtail-prod-assets/original_images/evolving_google_identity_3x2.jpg"
+    filename = 'test.jpg'
+    resp = send_to_dropbox(media_url, filename, DROPBOX_TOKEN)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data['async_job_id']
+

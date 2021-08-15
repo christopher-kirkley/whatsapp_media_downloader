@@ -20,21 +20,18 @@ def make_file_tuple(i, values):
 
     filename = url.split('/')[-1].split('.')[0] + '_' + body + '_' + _from + '_' + profile_name + '.' + content_type.split('/')[-1]
 
-    return {'url': url, 'filename': filename, '_from': _from}
+    _path = _from +  '/' + filename
 
-def send_to_dropbox(item, DROPBOX_TOKEN):
+    return (url, _path)
+
+def send_to_dropbox(url, _path, DROPBOX_TOKEN):
 
     # sends media url to dropbox api endpoint
     # constructs the file path to a subdirectory, storing media by contacts telephone number
     
-
-    media_url = item.get('url')
-    _path = item.get('_from') + '/' + item.get('filename') 
-    
-
     body = {
         "path": f"/{_path}",
-        "url": media_url
+        "url": url
     }
 
     headers = {
@@ -79,8 +76,8 @@ def get_media():
         content = {'error': 'missing whatsapp content'}
         return jsonify(content), 400
 
-    for item in media_files:
-        resp = send_to_dropbox(item, DROPBOX_TOKEN)
+    for media_url, _path in media_files:
+        resp = send_to_dropbox(media_url, _path, DROPBOX_TOKEN)
         if resp.json().get('error'):
             content = {'error': 'dropbox error'}
             return jsonify(content), 400
